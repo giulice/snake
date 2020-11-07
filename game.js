@@ -2,7 +2,12 @@ var canvas = null,
     ctx = null,
     x = 50,
     y = 50,
-    lastPress = null;
+    lastPress = null,
+    KEY_LEFT = 37,
+    KEY_UP = 38,
+    KEY_RIGHT = 39,
+    KEY_DOWN = 40,
+    dir = 0;
 
     window.requestAnimationFrame = (function (){
         return window.requestAnimationFrame || 
@@ -28,18 +33,65 @@ function act(){
     if (x > canvas.width) {
         x = 0;
     }
-    }
+    
+    // Change Direction
+    if (lastPress == KEY_UP) {
+        dir = 0;
+        }
+        if (lastPress == KEY_RIGHT) {
+        dir = 1;
+        }
+        if (lastPress == KEY_DOWN) {
+        dir = 2;
+        }
+        if (lastPress == KEY_LEFT) {
+        dir = 3;
+        }
+
+    // Move Rect
+    if (dir == 0) {
+        y -= 10;
+        }
+        if (dir == 1) {
+        x += 10;
+        }
+        if (dir == 2) {
+        y += 10;
+        }
+        if (dir == 3) {
+        x -= 10;
+        }
+
+    // Out Screen
+    if (x > canvas.width) {
+        x = 0;
+        }
+        if (y > canvas.height) {
+        y = 0;
+        }
+        if (x < 0) {
+        x = canvas.width;
+        }
+        if (y < 0) {
+        y = canvas.height;
+        }
+}
 
 function run() {
-    window.requestAnimationFrame(run);
+    setTimeout(run, 50);
     act();
+}
+
+function repaint() {
+    window.requestAnimationFrame(repaint);
     paint(ctx);
-    }
+}
 
 function init() {
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
     run();
+    repaint();
 }
 
 window.addEventListener('load', init, false);
