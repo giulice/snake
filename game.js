@@ -1,6 +1,6 @@
 var canvas = null,
     ctx = null,
-    player = null,
+    body = new Array(),
     food = null,
     lastPress = null,
     KEY_LEFT = 37,
@@ -12,6 +12,10 @@ var canvas = null,
     pause = true,
     score = 0,
     wall = new Array(),
+    iBody = new Image(),
+    iFood = new Image(),
+    aEat = new Audio(),
+    aDie = new Audio(),
     gameover = true;
 
     window.requestAnimationFrame = (function (){
@@ -33,23 +37,26 @@ function paint(ctx) {
     ctx.fillStyle = '#1E8449';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw square
-    ctx.fillStyle = '#0f0';
-    player.fill(ctx);
-
+    // Draw player
+    //ctx.fillStyle = '#0f0';
+    for (i = 0, l = body.length; i < l; i += 1) {
+        //body[i].fill(ctx);
+        ctx.drawImage(iBody, body[i].x, body[i].y);
+    }
     // Draw food
-    ctx.fillStyle = '#f00';
-    food.fill(ctx);
+    //ctx.fillStyle = '#f00';
+    //food.fill(ctx);
+    ctx.drawImage(iFood, food.x, food.y);
 
     // Debug last key pressed
     ctx.fillStyle = '#fff';
     //ctx.fillText('Last Press: ' + lastPress, 0, 20);
 
-    // Draw walls
+    /* // Draw walls
     ctx.fillStyle = '#999';
     for (i = 0, l = wall.length; i < l; i += 1) {
         wall[i].fill(ctx);
-    }
+    }  */
 
     // Draw score
     ctx.fillText('Score: ' + score, 0, 10);
@@ -90,45 +97,60 @@ function act(){
 
         // Move Rect
         if (dir == 0) {
-                player.y -= 10;
+                body[0].y -= 10;
             }
             if (dir == 1) {
-                player.x += 10;
+                body[0].x += 10;
             }
             if (dir == 2) {
-                player.y += 10;
+                body[0].y += 10;
             }
             if (dir == 3) {
-                player.x -= 10;
+                body[0].x -= 10;
             }
 
         // Out Screen
-        if (player.x > canvas.width) {
-                player.x = 0;
+        if (body[0].x > canvas.width) {
+            body[0].x = 0;
             }
-            if (player.y > canvas.height) {
-                player.y = 0;
+            if (body[0].y > canvas.height) {
+                body[0].y = 0;
             }
-            if (player.x < 0) {
-                player.x = canvas.width;
+            if (body[0].x < 0) {
+                body[0].x = canvas.width;
             }
-            if (player.y < 0) {
-                player.y = canvas.height;
+            if (body[0].y < 0) {
+                body[0].y = canvas.height;
             }
         // Food Intersects
-        if (player.intersects(food)) {
+        if (body[0].intersects(food)) {
+            aEat.play();
+            body.push(new Rectangle(food.x, food.y, 10, 10));
             score += 1;
             food.x = random(canvas.width / 10 - 1) * 10;
             food.y = random(canvas.height / 10 - 1) * 10;
         }
 
-        // Wall Intersects
+        /* // Wall Intersects
         for (i = 0, l = wall.length; i < l; i += 1) {
             if (food.intersects(wall[i])) {
                 food.x = random(canvas.width / 10 - 1) * 10;
                 food.y = random(canvas.height / 10 - 1) * 10;
             }
             if (player.intersects(wall[i])) {
+                gameover = true;
+                pause = true;
+            }
+        } */
+        // Move Body
+        for (i = body.length - 1; i > 0; i -= 1) {
+            body[i].x = body[i - 1].x;
+            body[i].y = body[i - 1].y;
+        }
+        // Body Intersects
+        for (i = 2, l = body.length; i < l; i += 1) {
+            if (body[0].intersects(body[i])) {
+                aDie.play();
                 gameover = true;
                 pause = true;
             }
@@ -155,10 +177,14 @@ function repaint() {
 function reset() {
     score = 0;
     dir = 1;
-    player.x = 40;
-    player.y = 40;
+    body[0].x = 40;
+    body[0].y = 40;
     food.x = random(canvas.width / 10 - 1) * 10;
     food.y = random(canvas.height / 10 - 1) * 10;
+    body.length = 0;
+    body.push(new Rectangle(40, 40, 10, 10));
+    body.push(new Rectangle(0, 0, 10, 10));
+    body.push(new Rectangle(0, 0, 10, 10));
     gameover = false;
 }
 
@@ -167,7 +193,7 @@ function init() {
     ctx = canvas.getContext('2d');
 
     // Create player
-    player = new Rectangle(40, 40, 10, 10);
+    body[0] = new Rectangle(40, 40, 10, 10);
     food = new Rectangle(80, 80, 10, 10);
 
     // Create walls
@@ -175,6 +201,12 @@ function init() {
     wall.push(new Rectangle(100, 100, 10, 10));
     wall.push(new Rectangle(200, 50, 10, 10));
     wall.push(new Rectangle(200, 100, 10, 10));
+
+    // Load assets
+    iBody.src = 'assets/body.png';
+    iFood.src = 'assets/fruit.png';
+    aEat.src = 'assets/chomp.mp3';
+    aDie.src = 'assets/dead.mp3';
     
     run();
     repaint();
