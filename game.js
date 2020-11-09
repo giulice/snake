@@ -11,22 +11,26 @@
         lastPress = null,
         pause = false,
         gameover = false,
-        currentScene = 0,
-        scenes = [],
-        mainScene = null,
-        gameScene = null,
-        highscoresScene = null,
         body = [],
         food = null,
         //var wall = [],
         dir = 0,
         score = 0,
+        currentScene = 0,
+        scenes = [],
+        mainScene = null,
+        gameScene = null,
+        highscoresScene = null,
+        extra = null,
+        iExtra = new Image(),
         iBody = new Image(),
         iFood = new Image(),
         aEat = new Audio(),
         aDie = new Audio(),
+        aExtra = new Audio(),
         highscores = [],
         posHighscore = 10;
+
     window.requestAnimationFrame = (function () {
         return window.requestAnimationFrame ||
         window.mozRequestAnimationFrame ||
@@ -107,6 +111,7 @@
             scenes[currentScene].act();
         }
     }
+    
     function init() {
         // Load saved highscores
         if (localStorage.highscores) {
@@ -118,10 +123,13 @@
         // Load assets
         iBody.src = 'assets/body.png';
         iFood.src = 'assets/fruit.png';
+        iExtra.src = 'assets/extra.png';
         aEat.src = 'assets/chomp.mp3';
         aDie.src = 'assets/dead.mp3';
+        aExtra.src = 'assets/chomp.mp3';
         // Create food
         food = new Rectangle(80, 80, 10, 10);
+        extra = new Rectangle(80, 80, 10, 10);
         // Create walls
         //wall.push(new Rectangle(50, 50, 10, 10));
         //wall.push(new Rectangle(50, 100, 10, 10));
@@ -161,6 +169,8 @@
         body.push(new Rectangle(0, 0, 10, 10));
         food.x = random(canvas.width / 10 - 1) * 10;
         food.y = random(canvas.height / 10 - 1) * 10;
+        extra.x = random(canvas.width / 10 - 1) * 10;
+        extra.y = random(canvas.height / 10 - 1) * 10;
         gameover = false;
     };
     gameScene.paint = function (ctx) {
@@ -174,6 +184,9 @@
         for (i = 0, l = body.length; i < l; i += 1) {
             body[i].drawImage(ctx, iBody);
         }
+        //Draw Extra
+        ctx.strokeStyle = '#f00';
+        extra.drawImage(ctx, iExtra);
         // Draw walls
         //ctx.fillStyle = '#999';
         //for (i = 0, l = wall.length; i < l; i += 1) {
@@ -211,7 +224,7 @@
     }
     gameScene.act = function () {
         var i = 0,
-        l = 0;
+            l = 0;
         if (!pause) {
             // GameOver Reset
             if (gameover) {
@@ -281,6 +294,14 @@
             // pause = true;
             // }
             //}
+            //Extra intersec
+            if (body[0].intersects(extra)) {
+                score += 5;
+                extra.x = random(canvas.width / 10 - 1) * 10;
+                extra.y = random(canvas.height / 10 - 1) * 10;
+                aEat.play();
+                sendScore()
+            }
             // Body Intersects
             for (i = 2, l = body.length; i < l; i += 1) {
                 if (body[0].intersects(body[i])) {
@@ -326,5 +347,20 @@
             lastPress = null;
         }
     };
+    function sendScore(){
+        fetch('https://jsonplaceholder.typicode.com/posts',{
+            method: 'POST',
+            body: JSON.stringify({
+                score
+            })
+        }).then(function(response){
+            return response.json()
+        .then(function(parseResponse){
+            console.log('Successfully response');
+        })
+        }).catch(function(error){
+            console.log('Error request')
+        })
+    }
     window.addEventListener('load', init, false);
 }(window));
